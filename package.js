@@ -1,7 +1,8 @@
 Package.describe({
     summary: "Azure Active Directory OAuth flow",
-    version: "0.1.0",
-    name: "wiseguyeh:azure-active-directory"
+    version: "0.1.1",
+    name: "wiseguyeh:azure-active-directory",
+    git: "https://github.com/djluck/azure-active-directory"
 });
 
 Package.onUse(function(api) {
