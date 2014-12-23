@@ -43,27 +43,30 @@ var getTokens = function (query) {
     if (!config)
         throw new ServiceConfiguration.ConfigError();
 
+    var url = "https://login.windows.net/" + config.tennantId + "/oauth2/token/";
+    var requestBody = {
+        params: {
+            client_id: config.clientId,
+            grant_type: 'authorization_code',
+            client_secret : OAuth.openSecret(config.clientSecret),
+            resource: "https://graph.windows.net",
+            redirect_uri: OAuth._redirectUri('azureAd', config),
+            code: query.code
+        }
+    };
     var response;
     try {
-        var url = "https://login.windows.net/" + config.tennantId + "/oauth2/token/";
-        var requestBody = {
-            params: {
-                client_id: config.clientId,
-                grant_type: 'authorization_code',
-                client_secret : OAuth.openSecret(config.clientSecret),
-                resource: "https://graph.windows.net",
-                redirect_uri: OAuth._redirectUri('azureAd', config),
-                code: query.code
-            }
-        };
-
         response = HTTP.post(
             url,
             requestBody
         );
     } catch (err) {
-        throw _.extend(new Error("Failed to complete OAuth handshake with AzureAd. " + err.message),
-            {response: err.response});
+        var details = {
+            response : err.response,
+            url : url,
+            request : requestBody
+        };
+        throw _.extend(new Error("Failed to complete OAuth handshake with AzureAd: " + err.message, details));
     }
 
     if (response.data.error) { // if the http response was a json object with an error attribute
@@ -78,14 +81,23 @@ var getTokens = function (query) {
 };
 
 var getIdentity = function (accessToken) {
+    var url = "https://graph.windows.net/93aea0df-f872-44a6-86aa-1f87271427f4/me?api-version=2013-11-08";
+    var request = {
+        headers: { Authorization : "Bearer " + accessToken}
+    }
+
     try {
-        var response =  HTTP.get(
-            "https://graph.windows.net/93aea0df-f872-44a6-86aa-1f87271427f4/me?api-version=2013-11-08",
-            {headers: { Authorization : "Bearer " + accessToken} });
+
+        var response =  HTTP.get(url, request);
         return response.data;
+
     } catch (err) {
-        throw _.extend(new Error("Failed to fetch identity from AzureAd. " + err.message),
-            {response: err.response});
+        var details = {
+            response : err.response,
+            url : url,
+            request : requestBody
+        };
+        throw _.extend(new Error("Failed to fetch identity from AzureAd: " + err.message, details));
     }
 };
 
