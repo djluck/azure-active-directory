@@ -1,5 +1,4 @@
 .build*
-versions.json
 .idea/
 .meteor/local
 .meteor/meteorite
