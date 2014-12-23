@@ -1,14 +1,15 @@
 Package.describe({
     summary: "Azure Active Directory OAuth flow",
-    version: "0.1.0"
+    version: "0.1.0",
+    name: "wiseguyeh:azure-active-directory"
 });
 
 Package.onUse(function(api) {
-    api.use('oauth2', ['client', 'server']);
-    api.use('oauth', ['client', 'server']);
-    api.use('http', ['server']);
-    api.use(['underscore', 'service-configuration'], ['client', 'server']);
-    api.use(['random', 'templating'], 'client');
+    api.use('oauth2@1.1.1', ['client', 'server']);
+    api.use('oauth@1.1.2', ['client', 'server']);
+    api.use('http@1.0.8', ['server']);
+    api.use(['underscore@1.0.1', 'service-configuration@1.0.2'], ['client', 'server']);
+    api.use(['random@1.0.1', 'templating@1.0.9'], 'client');
 
     api.export('AzureAd');
 
