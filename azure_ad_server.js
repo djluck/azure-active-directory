@@ -80,7 +80,6 @@ var getIdentity = function (accessToken) {
     var request = {
         headers: { Authorization : "Bearer " + accessToken}
     }
-
     try {
         var response =  HTTP.get(url, request);
         return response.data;
