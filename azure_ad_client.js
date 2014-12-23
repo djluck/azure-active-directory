@@ -26,6 +26,10 @@ AzureAd.requestCredential = function (options, credentialRequestCompleteCallback
     // http://msdn.microsoft.com/en-us/library/azure/dn645542.aspx
     var loginStyle = OAuth._loginStyle('azureAd', config, options);
 
+    //MUST be "popup" - currently Azure AD does not allow for url parameters in redirect URI's. If a null popup style is assigned, then
+    //the url parameter "close" is appended and authentication will fail.
+    config.loginStyle = "popup";
+
     var baseUrl = "https://login.windows.net/" + config.tennantId + "/oauth2/authorize?";
     var loginUrl = baseUrl +
         'api-version=1.0&' +
