@@ -61,16 +61,11 @@ var getTokens = function (query) {
             requestBody
         );
     } catch (err) {
-        var details = {
-            response : err.response,
-            url : url,
-            request : requestBody
-        };
-        throw _.extend(new Error("Failed to complete OAuth handshake with AzureAd: " + err.message, details));
+        throw getError("Failed to complete OAuth handshake with AzureAd", err.message, url, requestBody);
     }
 
     if (response.data.error) { // if the http response was a json object with an error attribute
-        throw new Error("Failed to complete OAuth handshake with AzureAd. " + response.data.error);
+        throw getError("Failed to complete OAuth handshake with AzureAd", response.data.error, url, requestBody);
     } else {
         return {
             accessToken: response.data.access_token,
@@ -87,17 +82,11 @@ var getIdentity = function (accessToken) {
     }
 
     try {
-
         var response =  HTTP.get(url, request);
         return response.data;
 
     } catch (err) {
-        var details = {
-            response : err.response,
-            url : url,
-            request : requestBody
-        };
-        throw _.extend(new Error("Failed to fetch identity from AzureAd: " + err.message, details));
+        throw getError("Failed to fetch identity from AzureAd", err.message, url, requestBody);
     }
 };
 
@@ -105,3 +94,7 @@ var getIdentity = function (accessToken) {
 AzureAd.retrieveCredential = function(credentialToken, credentialSecret) {
     return OAuth.retrieveCredential(credentialToken, credentialSecret);
 };
+
+var getError = function(message, errorMessage, url, requestBody){
+    return new Error(message + ": " + errorMessage + "\nSent to: " + url + "\nRequest body: " + JSON.stringify(requestBody));
+}
