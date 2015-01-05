@@ -39,13 +39,7 @@ OAuth.registerService('azureAd', 2, null, function(query) {
 // - expiresIn: lifetime of token in seconds
 // - refreshToken, if this is the first authorization request
 var getTokens = function (query) {
-    var config = ServiceConfiguration.configurations.findOne({service: 'azureAd'});
-    if (!config)
-        throw new ServiceConfiguration.ConfigError();
-
-    //MUST be "popup" - currently Azure AD does not allow for url parameters in redirect URI's. If a null popup style is assigned, then
-    //the url parameter "close" is appended and authentication will fail.
-    config.loginStyle = "popup";
+    var config = getAzureAdConfiguration();
 
     var url = "https://login.windows.net/" + config.tennantId + "/oauth2/token/";
     var requestBody = {
@@ -80,12 +74,14 @@ var getTokens = function (query) {
 };
 
 var getIdentity = function (accessToken) {
-    var url = "https://graph.windows.net/93aea0df-f872-44a6-86aa-1f87271427f4/me?api-version=2013-11-08";
-    var request = {
+    var config = getAzureAdConfiguration();
+    var url = "https://graph.windows.net/" + config.tennantId + "/me?api-version=2013-11-08";
+
+    var requestBody = {
         headers: { Authorization : "Bearer " + accessToken}
     }
     try {
-        var response =  HTTP.get(url, request);
+        var response =  HTTP.get(url, requestBody);
         return response.data;
 
     } catch (err) {
@@ -100,4 +96,16 @@ AzureAd.retrieveCredential = function(credentialToken, credentialSecret) {
 
 var getError = function(message, errorMessage, url, requestBody){
     return new Error(message + ": " + errorMessage + "\nSent to: " + url + "\nRequest body: " + JSON.stringify(requestBody));
+}
+
+var getAzureAdConfiguration = function(){
+    var config = ServiceConfiguration.configurations.findOne({service: 'azureAd'});
+    if (!config)
+        throw new ServiceConfiguration.ConfigError();
+
+    //MUST be "popup" - currently Azure AD does not allow for url parameters in redirect URI's. If a null popup style is assigned, then
+    //the url parameter "close" is appended and authentication will fail.
+    config.loginStyle = "popup";
+
+    return config;
 }
