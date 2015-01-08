@@ -2,6 +2,15 @@ AzureAd = {};
 
 AzureAd.whitelistedFields = ['objectId', 'userPrincipleName', 'mail', 'displayName', 'surname', 'givenName'];
 
+Accounts.onCreateUser(function(options, user) {
+    //by default, only the .profile option is copied across. Copy the .emails option as well.
+    if (options.profile)
+        user.profile = options.profile;
+    if (options.emails)
+        user.emails = options.emails;
+
+    return user;
+});
 
 OAuth.registerService('azureAd', 2, null, function(query) {
 
@@ -28,10 +37,18 @@ OAuth.registerService('azureAd', 2, null, function(query) {
     if (response.refreshToken)
         serviceData.refreshToken = response.refreshToken;
 
-    return {
-        serviceData: serviceData,
-        options: { profile: { name: identity.displayName } }
+    var emailAddress = identity.mail || identity.userPrincipleName;
+    
+    var options = {
+        profile: {
+            name: identity.displayName
+        },
+        emails : [{
+            address : emailAddress,
+            verified: true
+        }]
     };
+    return { serviceData: serviceData, options: options };
 });
 
 // returns an object containing:

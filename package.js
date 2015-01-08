@@ -11,6 +11,7 @@ Package.onUse(function(api) {
     api.use('http@1.0.8', ['server']);
     api.use(['underscore@1.0.1', 'service-configuration@1.0.2'], ['client', 'server']);
     api.use(['random@1.0.1', 'templating@1.0.9'], 'client');
+    api.use('accounts-base@1.1.3', ['client', 'server']);
 
     api.export('AzureAd');
 
