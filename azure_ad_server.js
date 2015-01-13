@@ -42,12 +42,15 @@ OAuth.registerService('azureAd', 2, null, function(query) {
     var options = {
         profile: {
             name: identity.displayName
-        },
-        emails : [{
+        }
+    };
+
+    if (!!emailAddress){
+        options.emails = [{
             address : emailAddress,
             verified: true
-        }]
-    };
+        }];
+    }
     return { serviceData: serviceData, options: options };
 });
 
@@ -63,7 +66,7 @@ var getTokens = function (query) {
         params: {
             client_id: config.clientId,
             grant_type: 'authorization_code',
-            client_secret : OAuth.openSecret(config.clientSecret),
+            client_secret : OAuth.openSecret(config.secret),
             resource: "https://graph.windows.net",
             redirect_uri: OAuth._redirectUri('azureAd', config),
             code: query.code
