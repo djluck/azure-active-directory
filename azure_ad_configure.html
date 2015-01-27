@@ -1,6 +1,10 @@
 <template name="configureLoginServiceDialogForAzureAd">
     <p>
-        Before getting set up, you're going to need to <a href="https://github.com/djluck/accounts-azure-active-directory/wiki/Adding-an-application-to-Azure-Active-Directory">create an Azure AD application for your meteor app</a>.
+        Before getting set up, you're going to need to <a href="https://github.com/djluck/accounts-azure-active-directory/wiki/Adding-an-application-to-Azure-Active-Directory">create an Azure AD application for your meteor app</a>, adding these Reply Urls:
+        <ul>
+            <li>{{siteUrl}}_oauth/azureAd</li>
+            <li>{{siteUrl}}_oauth/azureAd?close</li>
+        </ul>
     </p>
     <br/>
 </template>
