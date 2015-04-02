@@ -1,17 +1,62 @@
-AzureAd = {};
-
 AzureAd.whitelistedFields = ['objectId', 'userPrincipleName', 'mail', 'displayName', 'surname', 'givenName'];
 
 OAuth.registerService('azureAd', 2, null, function(query) {
 
-    var response = getTokens(query);
-    var accessToken = response.accessToken;
-    var identity = getIdentity(accessToken);
+    var firstResource = AzureAd.resources.getFirstResource()
+    var firstResourceResponse = getAccessTokenFromCode(firstResource, query);
 
+    //cases to consider - what if a resource fails in the chain
+    var otherResourceResponses =
+        _.chain(AzureAd.resources.getRestResources())
+        .map(function(resource){
+            //need to transform this into a resource object, complete with all methods
+            return {
+                resource : resource,
+                response:  getAccessTokenFromRefreshToken(resource, firstResourceResponse.accessToken)
+            }
+        })
+        .value();
+
+
+    var identity = getIdentity(_.skip(otherResourceResponses, 1).accessToken);
     var serviceData = {
         accessToken: accessToken,
         expiresAt: (+new Date) + (1000 * response.expiresIn)
     };
+    getCalendars(accessToken);
+
+    console.log(response.accessToken == office365Token.accessToken);
+    console.log(response.refreshToken == office365Token.refreshToken);
+    //going to need to store different service configurations per token
+
+    /*
+    A resource is an entity made up of the following values:
+    - resource (name)
+    - refresh_token
+    - access_token
+    - expires_on
+    - scope
+
+    A resource should provide:
+    - isAccessTokenExpired()
+    - getOrRefreshAccessToken() - a mechanism to get access token (use refresh_token to automatically get an up-to-date token)
+
+
+    The library should provide
+    - The inbuilt resource, graph
+    - A method to register additional resources, specifying the order in which they are added
+
+    Resources is one or more Resource entities, in a specified order.
+    - addResourceToTopOfHierarchy(r)
+    - addResourceToBottomOfHierarchy(r)
+    - getResources()
+
+    how do we package the office 365 resource? As a standalone package
+    (this package does nothing but add the office 365 resource to the top of the hierarchy)
+    we then provide the office 365 api on top of this.
+
+
+     */
 
     var fields = _.pick(identity, AzureAd.whitelistedFields);
 
@@ -44,41 +89,50 @@ OAuth.registerService('azureAd', 2, null, function(query) {
     return { serviceData: serviceData, options: options };
 });
 
-// returns an object containing:
-// - accessToken
-// - expiresIn: lifetime of token in seconds
-// - refreshToken, if this is the first authorization request
-var getTokens = function (query) {
+
+var getAccessTokenFromCode = function (resource, code) {
+    return getAccessToken(resource, {
+        grant_type: 'authorization_code',
+        code : code
+    });
+};
+
+var getAccessTokenFromRefreshToken = function(resource, refreshToken){
+    return getAccessToken(resource, {
+        grant_type: 'refresh_token',
+        refresh_token: refreshToken
+    });
+}
+
+var getAccessToken = function (resourceUri, additionalRequestParams) {
     var config = getAzureAdConfiguration();
 
     var url = "https://login.windows.net/" + config.tennantId + "/oauth2/token/";
-    var requestBody = {
-        params: {
-            client_id: config.clientId,
-            grant_type: 'authorization_code',
-            client_secret : OAuth.openSecret(config.secret),
-            resource: "https://graph.windows.net",
-            redirect_uri: OAuth._redirectUri('azureAd', config),
-            code: query.code
-        }
+    var baseParams = {
+        client_id: config.clientId,
+        client_secret : OAuth.openSecret(config.secret),
+        redirect_uri: OAuth._redirectUri('azureAd', config),
+        resource: resourceUri
     };
     var response;
     try {
-        response = HTTP.post(
-            url,
-            requestBody
-        );
-    } catch (err) {
-        throw getError("Failed to complete OAuth handshake with AzureAd", err.message, url, requestBody);
+        response = HTTP.post(url, { params: _.extend(baseParams, additionalRequestParams) });
+    }
+    catch (err) {
+        throw getError("Request for " + resourceUri + " access token failed", err.message, url, requestBody);
     }
 
-    if (response.data.error) { // if the http response was a json object with an error attribute
-        throw getError("Failed to complete OAuth handshake with AzureAd", response.data.error, url, requestBody);
-    } else {
+    if (response.data.error) {
+        throw getError("Received erroneous response when requesting " + resourceUri + " access token", response.data.error, url, requestBody);
+    }
+    else {
         return {
             accessToken: response.data.access_token,
             refreshToken: response.data.refresh_token,
-            expiresIn: response.data.expires_in
+            expiresIn: response.data.expires_in,
+            expiresOn: response.data.expires_on,
+            scope : response.scope,
+            resource: response.resource
         };
     }
 };
@@ -93,6 +147,22 @@ var getIdentity = function (accessToken) {
     try {
         var response =  HTTP.get(url, requestBody);
         return response.data;
+
+    } catch (err) {
+        throw getError("Failed to fetch identity from AzureAd", err.message, url, requestBody);
+    }
+};
+
+var getCalendars = function (accessToken) {
+    var config = getAzureAdConfiguration();
+    var url = "https://outlook.office365.com/api/v1.0/me/calendarview?startdatetime=2015-04-01T23:00:00.000Z&enddatetime=2015-04-02T23:00:00.000Z";
+
+    var requestBody = {
+        headers: { Authorization : "Bearer " + accessToken}
+    }
+    try {
+        var response =  HTTP.get(url, requestBody);
+        console.log(response);
 
     } catch (err) {
         throw getError("Failed to fetch identity from AzureAd", err.message, url, requestBody);
