@@ -14,10 +14,11 @@ Package.onUse(function(api) {
     api.use('accounts-base@1.1.3', ['client', 'server']);
 
     api.export('AzureAd');
+    api.export('Graph');
 
-    api.addFiles(
-        ['azure_ad_configure.html', 'azure_ad_configure.js'],
-        'client');
+    api.addFiles(['azureAd.js', 'config.js']);
+    api.addFiles(['resources.js', 'serverHttp.js', 'resources/graph.js'], 'server');
+    api.addFiles(['azure_ad_configure.html', 'azure_ad_configure.js'], 'client');
     api.addFiles('azure_ad_server.js', 'server');
     api.addFiles('azure_ad_client.js', 'client');
 });
