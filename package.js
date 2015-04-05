@@ -18,7 +18,6 @@ Package.onUse(function(api) {
     api.addFiles(
         ['azure_ad_configure.html', 'azure_ad_configure.js'],
         'client');
-
     api.addFiles('azure_ad_server.js', 'server');
     api.addFiles('azure_ad_client.js', 'client');
 });

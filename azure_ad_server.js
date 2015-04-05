@@ -1,32 +1,73 @@
+AzureAd = {};
+
+var resources = [];
+
+//we remove duplicate resources to allow the re-ordering of resources while giving set-like semantics to resources.
+var removeResourceIfPresent = function(resourceUri){
+    if (_.contains(resources, resourceUri))
+        _.without(resources, resourceUri);
+}
+
+AzureAd.resources = {
+    addResourceToTopOfHierarchy : function(resourceUri){
+        removeResourceIfPresent(resourceUri);
+
+        resources.unshift(resourceUri);
+    },
+    addResourceToBottomOfHierarchy : function(resourceUri){
+        removeResourceIfPresent(resourceUri);
+
+        resources.push(resourceUri);
+    },
+    getFirstResource : function(){
+        return _.first(resources);
+    },
+    getRestResources : function(){
+        return _.rest(resources);
+    }
+};
+
+AzureAd.resources.addResourceToBottomOfHierarchy("https://outlook.office365.com/");
+AzureAd.resources.addResourceToTopOfHierarchy("https://graph.windows.net/");
+
 AzureAd.whitelistedFields = ['objectId', 'userPrincipleName', 'mail', 'displayName', 'surname', 'givenName'];
+
+AzureAd.getTokenForResource = function(resourceUri){
+    //check for null user
+
+    //check for un-authenticated user
+
+    //get token using refresh token
+
+    //probably a good idea to include
+    //serviceData.resources - graph + office?
+}
 
 OAuth.registerService('azureAd', 2, null, function(query) {
 
     var firstResource = AzureAd.resources.getFirstResource()
-    var firstResourceResponse = getAccessTokenFromCode(firstResource, query);
+    var firstResourceResponse = getAccessTokenFromCode(firstResource, query.code);
 
     //cases to consider - what if a resource fails in the chain
-    var otherResourceResponses =
+    var resourceResponses =
         _.chain(AzureAd.resources.getRestResources())
         .map(function(resource){
             //need to transform this into a resource object, complete with all methods
-            return {
-                resource : resource,
-                response:  getAccessTokenFromRefreshToken(resource, firstResourceResponse.accessToken)
-            }
+            return [resource, getAccessTokenFromRefreshToken(resource, firstResourceResponse.refreshToken)];
         })
+        .union([[firstResource, firstResourceResponse]])
+        .object()
         .value();
 
 
-    var identity = getIdentity(_.skip(otherResourceResponses, 1).accessToken);
+    var identity = getIdentity(resourceResponses["https://graph.windows.net/"].accessToken);
     var serviceData = {
-        accessToken: accessToken,
-        expiresAt: (+new Date) + (1000 * response.expiresIn)
+        accessToken: firstResource.accessToken,
+        expiresAt: (+new Date) + (1000 * firstResourceResponse.expiresIn)
     };
-    getCalendars(accessToken);
+    getCalendars(resourceResponses["https://outlook.office365.com/"].accessToken);
 
-    console.log(response.accessToken == office365Token.accessToken);
-    console.log(response.refreshToken == office365Token.refreshToken);
+
     //going to need to store different service configurations per token
 
     /*
@@ -69,8 +110,8 @@ OAuth.registerService('azureAd', 2, null, function(query) {
     // only set the token in serviceData if it's there. this ensures
     // that we don't lose old ones (since we only get this on the first
     // log in attempt)
-    if (response.refreshToken)
-        serviceData.refreshToken = response.refreshToken;
+    if (firstResourceResponse.refreshToken)
+        serviceData.refreshToken = firstResourceResponse.refreshToken;
 
     var emailAddress = identity.mail || identity.userPrincipleName;
     
@@ -90,21 +131,21 @@ OAuth.registerService('azureAd', 2, null, function(query) {
 });
 
 
-var getAccessTokenFromCode = function (resource, code) {
+function getAccessTokenFromCode(resource, code) {
     return getAccessToken(resource, {
         grant_type: 'authorization_code',
         code : code
     });
 };
 
-var getAccessTokenFromRefreshToken = function(resource, refreshToken){
+function getAccessTokenFromRefreshToken(resource, refreshToken){
     return getAccessToken(resource, {
         grant_type: 'refresh_token',
         refresh_token: refreshToken
     });
 }
 
-var getAccessToken = function (resourceUri, additionalRequestParams) {
+function getAccessToken(resourceUri, additionalRequestParams) {
     var config = getAzureAdConfiguration();
 
     var url = "https://login.windows.net/" + config.tennantId + "/oauth2/token/";
@@ -114,9 +155,10 @@ var getAccessToken = function (resourceUri, additionalRequestParams) {
         redirect_uri: OAuth._redirectUri('azureAd', config),
         resource: resourceUri
     };
+    var requestBody = _.extend(baseParams, additionalRequestParams);
     var response;
     try {
-        response = HTTP.post(url, { params: _.extend(baseParams, additionalRequestParams) });
+        response = HTTP.post(url, { params: requestBody } );
     }
     catch (err) {
         throw getError("Request for " + resourceUri + " access token failed", err.message, url, requestBody);
@@ -131,8 +173,8 @@ var getAccessToken = function (resourceUri, additionalRequestParams) {
             refreshToken: response.data.refresh_token,
             expiresIn: response.data.expires_in,
             expiresOn: response.data.expires_on,
-            scope : response.scope,
-            resource: response.resource
+            scope : response.data.scope,
+            resource: response.data.resource
         };
     }
 };
@@ -162,7 +204,6 @@ var getCalendars = function (accessToken) {
     }
     try {
         var response =  HTTP.get(url, requestBody);
-        console.log(response);
 
     } catch (err) {
         throw getError("Failed to fetch identity from AzureAd", err.message, url, requestBody);
