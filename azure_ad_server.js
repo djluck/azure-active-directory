@@ -1,3 +1,5 @@
+AzureAd.whitelistedFields = ['objectId', 'userPrincipleName', 'mail', 'displayName', 'surname', 'givenName'];
+
 OAuth.registerService('azureAd', 2, null, function(query) {
 
     var tokens = getTokensFromCode(AzureAd.resources.graph.resourceUri, query.code);
@@ -7,7 +9,7 @@ OAuth.registerService('azureAd', 2, null, function(query) {
         expiresAt: (+new Date) + (1000 * tokens.expiresIn)
     };
 
-    var fields = _.pick(graphUser, AzureAd.resources.graph.whitelistedFields);
+    var fields = _.pick(graphUser, AzureAd.whitelistedFields);
 
     //must re-write the objectId field to id - meteor expects a field named "id"
     fields.id = fields.objectId; //we should add

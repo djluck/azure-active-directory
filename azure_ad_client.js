@@ -12,7 +12,14 @@ AzureAd.requestCredential = function (options, credentialRequestCompleteCallback
         options = {};
     }
 
-    var config = AzureAd.getConfiguration();
+    var config = AzureAd.getConfiguration(true);
+    if (!config) {
+        credentialRequestCompleteCallback && credentialRequestCompleteCallback(
+            new ServiceConfiguration.ConfigError());
+        return;
+    }
+
+    var loginStyle = OAuth._loginStyle('azureAd', config, options);
     var credentialToken = Random.secret();
 
     var baseUrl = "https://login.windows.net/" + config.tennantId + "/oauth2/authorize?";

@@ -1,6 +1,6 @@
 Package.describe({
     summary: "Azure Active Directory OAuth flow",
-    version: "0.2.5",
+    version: "0.3.0",
     name: "wiseguyeh:azure-active-directory",
     git: "https://github.com/djluck/azure-active-directory"
 });
@@ -14,10 +14,9 @@ Package.onUse(function(api) {
     api.use('accounts-base@1.1.3', ['client', 'server']);
 
     api.export('AzureAd');
-    api.export('Graph');
 
-    api.addFiles(['azureAd.js', 'config.js']);
-    api.addFiles(['resources.js', 'serverHttp.js', 'resources/graph.js'], 'server');
+    api.addFiles(['lib/azureAd.js']);
+    api.addFiles(['lib/resources.js', 'lib/serverHttp.js', 'resources/graph.js'], 'server');
     api.addFiles(['azure_ad_configure.html', 'azure_ad_configure.js'], 'client');
     api.addFiles('azure_ad_server.js', 'server');
     api.addFiles('azure_ad_client.js', 'client');
