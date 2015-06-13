@@ -22,7 +22,7 @@ AzureAd.requestCredential = function (options, credentialRequestCompleteCallback
     var loginStyle = OAuth._loginStyle('azureAd', config, options);
     var credentialToken = Random.secret();
 
-    var baseUrl = "https://login.windows.net/" + config.tennantId + "/oauth2/authorize?";
+    var baseUrl = "https://login.windows.net/common/oauth2/authorize?";
     var loginUrl = baseUrl +
         'api-version=1.0&' +
         '&response_type=code' +

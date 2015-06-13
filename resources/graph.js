@@ -4,7 +4,7 @@ AzureAd.resources.graph.resourceUri = "https://graph.windows.net/";
 
 AzureAd.resources.graph.getUser = function (accessToken) {
     var config = AzureAd.getConfiguration();
-    var url = "https://graph.windows.net/" + config.tennantId + "/me?api-version=2013-11-08";
+    var url = "https://graph.windows.net/myorganization/me?api-version=2013-11-08";
 
     return AzureAd.http.callAuthenticated("GET", url, accessToken);
 };
