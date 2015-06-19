@@ -19,14 +19,22 @@ AzureAd.requestCredential = function (options, credentialRequestCompleteCallback
         return;
     }
 
+    var prompt = '&prompt=login';
+    if (typeof options.loginPrompt === 'string') {
+        if (options.loginPrompt === "")
+            prompt = '';
+        else
+            prompt = '&prompt=' + options.loginPrompt;
+    }
+
     var loginStyle = OAuth._loginStyle('azureAd', config, options);
     var credentialToken = Random.secret();
 
-    var baseUrl = "https://login.windows.net/" + config.tennantId + "/oauth2/authorize?";
+    var baseUrl = "https://login.windows.net/common/oauth2/authorize?";
     var loginUrl = baseUrl +
         'api-version=1.0&' +
         '&response_type=code' +
-        '&prompt=login' +
+        prompt +
         '&client_id=' + config.clientId +
         '&state=' + OAuth._stateParam(loginStyle, credentialToken) +
         '&redirect_uri=' + OAuth._redirectUri('azureAd', config);
