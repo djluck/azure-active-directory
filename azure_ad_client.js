@@ -36,7 +36,7 @@ AzureAd.requestCredential = function (options, credentialRequestCompleteCallback
         '&response_type=code' +
         prompt +
         '&client_id=' + config.clientId +
-        '&state=' + OAuth._stateParam(loginStyle, credentialToken) +
+        '&state=' + OAuth._stateParam(loginStyle, credentialToken, options.redirectUrl) +
         '&redirect_uri=' + OAuth._redirectUri('azureAd', config);
 
     OAuth.launchLogin({
