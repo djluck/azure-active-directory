@@ -19,6 +19,10 @@ AzureAd.requestCredential = function (options, credentialRequestCompleteCallback
         return;
     }
 
+    var scope = [];
+    if (options.requestPermissions)
+        scope = options.requestPermissions;
+
     var prompt = '&prompt=login';
     if (typeof options.loginPrompt === 'string') {
         if (options.loginPrompt === "")
@@ -34,9 +38,10 @@ AzureAd.requestCredential = function (options, credentialRequestCompleteCallback
     var loginUrl = baseUrl +
         'api-version=1.0&' +
         '&response_type=code' +
+        '&scope=' + scope.join(' ') +
         prompt +
         '&client_id=' + config.clientId +
-        '&state=' + OAuth._stateParam(loginStyle, credentialToken) +
+        '&state=' + OAuth._stateParam(loginStyle, credentialToken, options.redirectUrl) +
         '&redirect_uri=' + OAuth._redirectUri('azureAd', config);
 
     OAuth.launchLogin({

@@ -1,19 +1,14 @@
-AzureAd.whitelistedFields = ['objectId', 'userPrincipleName', 'mail', 'displayName', 'surname', 'givenName'];
+AzureAd.whitelistedFields = ['id', 'userPrincipalName', 'mail', 'displayName', 'surname', 'givenName'];
 
 OAuth.registerService('azureAd', 2, null, function(query) {
 
-    var tokens = getTokensFromCode(AzureAd.resources.graph.resourceUri, query.code);
-    var graphUser = AzureAd.resources.graph.getUser(tokens.accessToken)
+    var tokens = getTokensFromCode(AzureAd.resources.microsoftGraph.resourceUri, query.code);
+    var microsoftGraphUser = AzureAd.resources.microsoftGraph.getUser(tokens.accessToken)
     var serviceData = {
         accessToken: tokens.accessToken,
         expiresAt: (+new Date) + (1000 * tokens.expiresIn)
     };
-
-    var fields = _.pick(graphUser, AzureAd.whitelistedFields);
-
-    //must re-write the objectId field to id - meteor expects a field named "id"
-    fields.id = fields.objectId; //we should add
-    delete fields.objectId;
+    var fields = _.pick(microsoftGraphUser, AzureAd.whitelistedFields);
 
     _.extend(serviceData, fields);
 
@@ -23,11 +18,11 @@ OAuth.registerService('azureAd', 2, null, function(query) {
     if (tokens.refreshToken)
         serviceData.refreshToken = tokens.refreshToken;
 
-    var emailAddress = graphUser.mail || graphUser.userPrincipleName;
-    
+    var emailAddress = microsoftGraphUser.mail || microsoftGraphUser.userPrincipalName;
+
     var options = {
         profile: {
-            name: graphUser.displayName
+            name: microsoftGraphUser.displayName
         }
     };
 

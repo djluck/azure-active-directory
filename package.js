@@ -16,7 +16,7 @@ Package.onUse(function(api) {
     api.export('AzureAd');
 
     api.addFiles(['lib/azureAd.js']);
-    api.addFiles(['lib/resources.js', 'lib/serverHttp.js', 'resources/graph.js'], 'server');
+    api.addFiles(['lib/resources.js', 'lib/serverHttp.js', 'resources/graph.js', 'resources/microsoftGraph.js'], 'server');
     api.addFiles(['azure_ad_configure.html', 'azure_ad_configure.js'], 'client');
     api.addFiles('azure_ad_server.js', 'server');
     api.addFiles('azure_ad_client.js', 'client');
