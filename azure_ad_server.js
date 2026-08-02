@@ -1,4 +1,4 @@
-AzureAd.whitelistedFields = ['objectId', 'userPrincipleName', 'mail', 'displayName', 'surname', 'givenName'];
+AzureAd.whitelistedFields = ['objectId', 'userPrincipalName', 'mail', 'displayName', 'surname', 'givenName'];
 
 OAuth.registerService('azureAd', 2, null, function(query) {
 
@@ -23,7 +23,7 @@ OAuth.registerService('azureAd', 2, null, function(query) {
     if (tokens.refreshToken)
         serviceData.refreshToken = tokens.refreshToken;
 
-    var emailAddress = graphUser.mail || graphUser.userPrincipleName;
+    var emailAddress = graphUser.mail || graphUser.userPrincipalName;
     
     var options = {
         profile: {
